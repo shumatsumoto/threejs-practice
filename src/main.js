@@ -57,8 +57,21 @@ scene.add(pointLight);
 let pointLightHelper = new THREE.PointLightHelper(pointLight, 30);
 scene.add(pointLightHelper);
 
-// レンダリング
-renderer.render(scene, camera);
+function animate() {
+  // ポイント光源を巡回させる
+  pointLight.position.set(
+    200 * Math.sin(Date.now() / 500),
+    200 * Math.sin(Date.now() / 1000),
+    200 * Math.cos(Date.now() / 500)
+  );
+
+  // レンダリング
+  renderer.render(scene, camera);
+
+  requestAnimationFrame(animate);
+}
+
+animate();
 
 // document.querySelector("#app").innerHTML = `
 //   <div>
