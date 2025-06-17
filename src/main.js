@@ -27,6 +27,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 
 renderer.render(scene, camera);
 
+// ジオメトリ作成
+const ballGeometry = new THREE.SphereGeometry(100, 64, 32);
+
 // document.querySelector("#app").innerHTML = `
 //   <div>
 //     <a href="https://vite.dev" target="_blank">
