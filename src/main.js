@@ -6,12 +6,14 @@ import { setupCounter } from "./counter.js";
 import * as THREE from "three";
 import { ThreeMFLoader } from "three/examples/jsm/Addons.js";
 
+let scene, camera, renderer, pointLight;
+
 // シーン作成
-const scene = new THREE.Scene();
+scene = new THREE.Scene();
 console.log(scene);
 
 // カメラ追加
-const camera = new THREE.PerspectiveCamera(
+camera = new THREE.PerspectiveCamera(
   50,
   window.innerWidth / window.innerHeight,
   0.1,
@@ -21,7 +23,7 @@ camera.position.set(0, 0, +500);
 console.log(camera);
 
 // レンダラー追加
-const renderer = new THREE.WebGLRenderer({
+renderer = new THREE.WebGLRenderer({
   alpha: true,
 });
 
@@ -43,6 +45,17 @@ scene.add(ballMesh);
 const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
 directionalLight.position.set(1, 1, 1);
 scene.add(directionalLight);
+
+// ポイント光源を追加
+pointLight = new THREE.PointLight(0xffffff, 1);
+pointLight.position.set(-200, -200, -200);
+pointLight.decay = 1;
+pointLight.power = 1000;
+scene.add(pointLight);
+
+// ポイント光源がどこにあるかを特定
+let pointLightHelper = new THREE.PointLightHelper(pointLight, 30);
+scene.add(pointLightHelper);
 
 // レンダリング
 renderer.render(scene, camera);
