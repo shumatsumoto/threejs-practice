@@ -19,7 +19,9 @@ const camera = new THREE.PerspectiveCamera(
 console.log(camera);
 
 // レンダラー追加
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({
+  alpha: true,
+});
 document.body.appendChild(renderer.domElement);
 renderer.setSize(window.innerWidth, window.innerHeight);
 
