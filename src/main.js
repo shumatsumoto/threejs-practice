@@ -4,6 +4,7 @@ import viteLogo from "/vite.svg";
 import { setupCounter } from "./counter.js";
 
 import * as THREE from "three";
+import { ThreeMFLoader } from "three/examples/jsm/Addons.js";
 
 // シーン作成
 const scene = new THREE.Scene();
@@ -16,19 +17,30 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
+camera.position.set(0, 0, +500);
 console.log(camera);
 
 // レンダラー追加
 const renderer = new THREE.WebGLRenderer({
   alpha: true,
 });
+
 document.body.appendChild(renderer.domElement);
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-renderer.render(scene, camera);
-
 // ジオメトリ作成
 const ballGeometry = new THREE.SphereGeometry(100, 64, 32);
+
+// マテリアル作成
+const ballMaterial = new THREE.MeshPhysicalMaterial();
+
+// メッシュ作成
+const ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
+
+scene.add(ballMesh);
+
+// レンダリング
+renderer.render(scene, camera);
 
 // document.querySelector("#app").innerHTML = `
 //   <div>
