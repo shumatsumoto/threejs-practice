@@ -4,9 +4,9 @@ import viteLogo from "/vite.svg";
 import { setupCounter } from "./counter.js";
 
 import * as THREE from "three";
-import { ThreeMFLoader } from "three/examples/jsm/Addons.js";
+import { ThreeMFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 
-let scene, camera, renderer, pointLight;
+let scene, camera, renderer, pointLight, controls;
 
 // シーン作成
 scene = new THREE.Scene();
@@ -56,6 +56,9 @@ scene.add(pointLight);
 // ポイント光源がどこにあるかを特定
 let pointLightHelper = new THREE.PointLightHelper(pointLight, 30);
 scene.add(pointLightHelper);
+
+// マウス操作可能にする
+controls = new OrbitControls(camera, renderer.domElement);
 
 function animate() {
   // ポイント光源を巡回させる
