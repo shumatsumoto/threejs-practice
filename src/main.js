@@ -8,63 +8,79 @@ import { ThreeMFLoader, OrbitControls } from "three/examples/jsm/Addons.js";
 
 let scene, camera, renderer, pointLight, controls;
 
-// シーン作成
-scene = new THREE.Scene();
-console.log(scene);
+window.addEventListener("load", init);
 
-// カメラ追加
-camera = new THREE.PerspectiveCamera(
-  50,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
-camera.position.set(0, 0, +500);
-console.log(camera);
+function init() {
+  // シーン作成
+  scene = new THREE.Scene();
+  console.log(scene);
 
-// レンダラー追加
-renderer = new THREE.WebGLRenderer({
-  alpha: true,
-});
+  // カメラ追加
+  camera = new THREE.PerspectiveCamera(
+    50,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.set(0, 0, +500);
+  console.log(camera);
 
-document.body.appendChild(renderer.domElement);
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
+  // レンダラー追加
+  renderer = new THREE.WebGLRenderer({
+    alpha: true,
+  });
 
-// テクスチャ追加
-let textures = new THREE.TextureLoader().load("/earth.jpg");
+  document.body.appendChild(renderer.domElement);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
 
-// ジオメトリ作成
-const ballGeometry = new THREE.SphereGeometry(100, 64, 32);
+  // テクスチャ追加
+  let textures = new THREE.TextureLoader().load("/earth.jpg");
 
-// マテリアル作成
-const ballMaterial = new THREE.MeshPhysicalMaterial({
-  map: textures,
-});
+  // ジオメトリ作成
+  const ballGeometry = new THREE.SphereGeometry(100, 64, 32);
 
-// メッシュ作成
-const ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
+  // マテリアル作成
+  const ballMaterial = new THREE.MeshPhysicalMaterial({
+    map: textures,
+  });
 
-scene.add(ballMesh);
+  // メッシュ作成
+  const ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
 
-// 平行光源を追加
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-directionalLight.position.set(1, 1, 1);
-scene.add(directionalLight);
+  scene.add(ballMesh);
 
-// ポイント光源を追加
-pointLight = new THREE.PointLight(0xffffff, 1);
-pointLight.position.set(-200, -200, -200);
-pointLight.decay = 1;
-pointLight.power = 1000;
-scene.add(pointLight);
+  // 平行光源を追加
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+  directionalLight.position.set(1, 1, 1);
+  scene.add(directionalLight);
 
-// ポイント光源がどこにあるかを特定
-let pointLightHelper = new THREE.PointLightHelper(pointLight, 30);
-scene.add(pointLightHelper);
+  // ポイント光源を追加
+  pointLight = new THREE.PointLight(0xffffff, 1);
+  pointLight.position.set(-200, -200, -200);
+  pointLight.decay = 1;
+  pointLight.power = 1000;
+  scene.add(pointLight);
 
-// マウス操作可能にする
-controls = new OrbitControls(camera, renderer.domElement);
+  // ポイント光源がどこにあるかを特定
+  let pointLightHelper = new THREE.PointLightHelper(pointLight, 30);
+  scene.add(pointLightHelper);
+
+  // マウス操作可能にする
+  controls = new OrbitControls(camera, renderer.domElement);
+
+  window.addEventListener("resize", onWindowResize);
+
+  animate();
+}
+
+// ブラウザのリサイズに対応
+function onWindowResize() {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+}
 
 function animate() {
   // ポイント光源を巡回させる
@@ -79,8 +95,6 @@ function animate() {
 
   requestAnimationFrame(animate);
 }
-
-animate();
 
 // document.querySelector("#app").innerHTML = `
 //   <div>
