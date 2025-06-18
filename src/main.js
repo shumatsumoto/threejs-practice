@@ -29,12 +29,18 @@ renderer = new THREE.WebGLRenderer({
 
 document.body.appendChild(renderer.domElement);
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
+
+// テクスチャ追加
+let textures = new THREE.TextureLoader().load("/earth.jpg");
 
 // ジオメトリ作成
 const ballGeometry = new THREE.SphereGeometry(100, 64, 32);
 
 // マテリアル作成
-const ballMaterial = new THREE.MeshPhysicalMaterial();
+const ballMaterial = new THREE.MeshPhysicalMaterial({
+  map: textures,
+});
 
 // メッシュ作成
 const ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
