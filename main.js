@@ -1,39 +1,32 @@
 import * as THREE from "three";
 
-// STEP 1: シーンを作成
 const scene = new THREE.Scene();
-
-// STEP 2: カメラを作成
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
 );
-camera.position.z = 5;
-
-// STEP 3: レンダラーを作成
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
-
-// STEP 4: レンダラーをDOMに追加
 document.body.appendChild(renderer.domElement);
 
+// --- ここから記述してください ---
 
-// 1. ジオメトリ（形状）を作成
-const geometry = new THREE.BoxGeometry(1, 1, 1);
+// 1. 球体ジオメトリを作成
+const geometry = new THREE.SphereGeometry(1, 16, 16);
 
-// 2. マテリアル（材質）を作成
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+// 2. 青色のワイヤーフレームマテリアルを作成
+const material = new THREE.MeshBasicMaterial({
+  color: 0x0000ff,
+  wireframe: true,
+});
 
-// 3. メッシュ（物体）を作成
-const cube = new THREE.Mesh(geometry, material);
+// 3. メッシュを作成してシーンに追加
+const sphere = new THREE.Mesh(geometry, material);
+scene.add(sphere);
 
-// 4. シーンに追加
-scene.add(cube);
+// --- ここまで ---
 
-// 5. カメラの位置を調整
 camera.position.z = 5;
-
-// STEP 5: 描画を実行
 renderer.render(scene, camera);
