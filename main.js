@@ -11,22 +11,23 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// --- ここから記述してください ---
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
 
-// 1. 球体ジオメトリを作成
-const geometry = new THREE.SphereGeometry(1, 16, 16);
+camera.position.z = 10;
 
-// 2. 青色のワイヤーフレームマテリアルを作成
-const material = new THREE.MeshBasicMaterial({
-  color: 0x0000ff,
-  wireframe: true,
-});
+// --- ここで位置を変更してください ---
+// cube.position.x = 5;
+// cube.position.y = 5;
+// cube.position.z = 3;
+cube.position.set(5, 5, 3);
 
-// 3. メッシュを作成してシーンに追加
-const sphere = new THREE.Mesh(geometry, material);
-scene.add(sphere);
+// 軸を表示するためのヘルパーを追加
+const axesHelper = new THREE.AxesHelper(50);
+scene.add(axesHelper);
 
 // --- ここまで ---
 
-camera.position.z = 5;
 renderer.render(scene, camera);
