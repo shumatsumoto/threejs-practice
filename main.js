@@ -16,16 +16,14 @@ const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 const cube = new THREE.Mesh(geometry, material);
 scene.add(cube);
 
-camera.position.z = 10;
+camera.position.z = 5;
 
-// --- ここで位置を変更してください ---
-// cube.position.x = 5;
-// cube.position.y = 5;
-// cube.position.z = 3;
-cube.position.set(5, 5, 3);
+// --- ここで回転させてください ---
+cube.rotation.x = Math.PI / 4; // X軸に45度回転
+cube.rotation.y = Math.PI / 4; // Y軸に45度回転
 
-// 軸を表示するためのヘルパーを追加
-const axesHelper = new THREE.AxesHelper(50);
+//軸を表示
+const axesHelper = new THREE.AxesHelper(20);
 scene.add(axesHelper);
 
 // --- ここまで ---
