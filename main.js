@@ -18,9 +18,18 @@ scene.add(cube);
 
 camera.position.z = 5;
 
-// --- ここでスケールを変更してください ---
-cube.scale.set(2, 0.5, 5);
+// --- これまでの renderer.render(scene, camera); を削除し、
+//     アニメーションループを作成してください ---
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  cube.rotation.x += 0.03;
+  cube.rotation.y += 0.03;
+
+  renderer.render(scene, camera);
+}
+
+animate();
 
 // --- ここまで ---
-
-renderer.render(scene, camera);
