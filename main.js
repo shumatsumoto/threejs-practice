@@ -11,35 +11,43 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// --- 変更点: BasicMaterialではなくStandardMaterialを使用 ---
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
 const cube = new THREE.Mesh(geometry, material);
 scene.add(cube);
 
-camera.position.z = 5;
-
-// --- ここでライトを追加してください ---
-const ambientLight = new THREE.AmbientLight(0xffffff); // 環境光
-scene.add(ambientLight);
-
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // 平行光源
-directionalLight.position.set(5, 5, 5).normalize();
-scene.add(directionalLight);
-
-// directionalLightのヘルパーを追加してライトの位置を可視化
-const directionalLightHelper = new THREE.DirectionalLightHelper(
-  directionalLight,
-  1,
+// 床（光の当たり方がわかりやすいように）
+const plane = new THREE.Mesh(
+  new THREE.PlaneGeometry(10, 10),
+  new THREE.MeshStandardMaterial({ color: 0xaaaaaa }),
 );
-scene.add(directionalLightHelper);
+plane.rotation.x = -Math.PI / 2;
+plane.position.y = -1;
+scene.add(plane);
+
+camera.position.set(0, 2, 5);
+camera.lookAt(0, 0, 0);
+
+// --- ここでSpotLightとHelperを追加してください ---
+const spotLight = new THREE.SpotLight(0xffffff, 10);
+
+scene.add(spotLight);
+
+const spotLightHelper = new THREE.SpotLightHelper(spotLight);
+spotLight.position.set(0, 5, 0);
+spotLight.angle = Math.PI / 6;
+spotLight.penumbra = 0.2;
+scene.add(spotLightHelper);
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // 環境光
+scene.add(ambientLight);
 
 // --- ここまで ---
 
 function animate() {
   requestAnimationFrame(animate);
-  cube.rotation.x += 0.01;
   cube.rotation.y += 0.01;
+  spotLightHelper.update();
   renderer.render(scene, camera);
 }
 animate();
