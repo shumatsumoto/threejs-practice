@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -9,43 +10,32 @@ const camera = new THREE.PerspectiveCamera(
 );
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
-// --- ここでレンダラーの影を有効にしてください ---
-renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// ライト
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(5, 5, 5);
-// --- ここでライトの影を有効にしてください ---
-light.castShadow = true;
-scene.add(light);
+// カメラ動かせるようにする
+const controls = new OrbitControls(camera, renderer.domElement);
 
-// キューブ
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(geometry, material);
-// --- ここでキューブが影を落とすように設定してください ---
-cube.castShadow = true;
-scene.add(cube);
+// --- ここでテクスチャを読み込んでください ---
+// 画像URL例: 'https://threejs.org/examples/textures/crate.gif'
 
-// 床
-const planeGeo = new THREE.PlaneGeometry(10, 10);
-const planeMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
-const plane = new THREE.Mesh(planeGeo, planeMat);
-plane.rotation.x = -Math.PI / 2; // 水平にする
-plane.position.y = -1; // キューブの下へ
-// --- ここで床が影を受けるように設定してください ---
-plane.receiveShadow = true;
-scene.add(plane);
+// --- ここで平面を作成し、テクスチャを貼り付けてください ---
+
+const textureLoader = new THREE.TextureLoader();
+textureLoader.load(
+  "https://threejs.org/examples/textures/crate.gif",
+  (texture) => {
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    const material = new THREE.MeshBasicMaterial({ map: texture });
+    const plane = new THREE.Mesh(geometry, material);
+    scene.add(plane);
+  },
+);
 
 camera.position.z = 5;
-camera.position.y = 2;
-camera.lookAt(0, 0, 0);
 
 function animate() {
   requestAnimationFrame(animate);
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
   renderer.render(scene, camera);
+  controls.update();
 }
 animate();
