@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -12,30 +11,25 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// カメラ動かせるようにする
-const controls = new OrbitControls(camera, renderer.domElement);
+// --- テクスチャ読み込み ---
+const loader = new THREE.TextureLoader();
+const texture = loader.load("https://threejs.org/examples/textures/crate.gif");
 
-// --- ここでテクスチャを読み込んでください ---
-// 画像URL例: 'https://threejs.org/examples/textures/crate.gif'
-
-// --- ここで平面を作成し、テクスチャを貼り付けてください ---
-
-const textureLoader = new THREE.TextureLoader();
-textureLoader.load(
-  "https://threejs.org/examples/textures/crate.gif",
-  (texture) => {
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    const material = new THREE.MeshBasicMaterial({ map: texture });
-    const plane = new THREE.Mesh(geometry, material);
-    scene.add(plane);
-  },
-);
+// --- ここでキューブを作成し、テクスチャを貼ってください ---
+const geometry = new THREE.BoxGeometry(3, 3, 3);
+const material = new THREE.MeshBasicMaterial({ map: texture });
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
+
+  // --- 回転処理 ---
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
+
   renderer.render(scene, camera);
-  controls.update();
 }
 animate();
