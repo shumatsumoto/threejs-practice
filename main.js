@@ -11,25 +11,17 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// --- テクスチャ読み込み ---
-const loader = new THREE.TextureLoader();
-const texture = loader.load("https://threejs.org/examples/textures/crate.gif");
+const geometry = new THREE.BoxGeometry(2, 2, 2);
 
-// --- ここでキューブを作成し、テクスチャを貼ってください ---
-const geometry = new THREE.BoxGeometry(3, 3, 3);
-const material = new THREE.MeshBasicMaterial({ map: texture });
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+// --- ここでWireframeGeometryを使って線画を作成してください ---
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-
-  // --- 回転処理 ---
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
-
+  // 回転させる（変数名は適宜変更）
+  // line.rotation.x += 0.01;
+  // line.rotation.y += 0.01;
   renderer.render(scene, camera);
 }
 animate();
