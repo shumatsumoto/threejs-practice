@@ -18,31 +18,26 @@ scene.add(cube);
 
 camera.position.z = 5;
 
-// --- ここでRaycasterなどの準備 ---
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-window.addEventListener("click", (event) => {
-  // --- ここでクリック判定処理を記述 ---
-
-  // マウス座標を正規化
+// マウス移動時に座標を更新
+window.addEventListener("mousemove", (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  // Raycasterを更新
-  raycaster.setFromCamera(mouse, camera);
-
-  // オブジェクトとの交差を計算
-  const intersects = raycaster.intersectObjects(scene.children);
-  if (intersects.length > 0) {
-    console.log("オブジェクトがクリックされました:", intersects[0].object);
-    // ここでクリックされたオブジェクトに対する処理を行うことができます
-    intersects[0].object.material.color.set(Math.random() * 0xffffff); // 例: クリックされたオブジェクトの色をランダムに変更
-  }
 });
 
 function animate() {
   requestAnimationFrame(animate);
+
+  // --- ここでRaycaster判定とスケール変更を行ってください ---
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(scene.children);
+  if (intersects.length > 0) {
+    intersects[0].object.scale.set(1.5, 1.5, 1.5); // スケールを大きくする
+  } else {
+    cube.scale.set(1, 1, 1); // 元のスケールに戻す
+  }
 
   cube.rotation.x += 0.01;
   cube.rotation.y += 0.01;
