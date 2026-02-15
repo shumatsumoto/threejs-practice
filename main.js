@@ -11,22 +11,37 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// --- ここで円柱を作成してください ---
-const geometry = new THREE.CylinderGeometry(0, 1, 1, 32);
-const material = new THREE.MeshBasicMaterial({
-  color: 0x00ff00,
+// 太陽（中央）
+const sunGeo = new THREE.SphereGeometry(1, 32, 16);
+const sunMat = new THREE.MeshBasicMaterial({
+  color: 0xff0000,
   wireframe: true,
 });
-const cylinder = new THREE.Mesh(geometry, material);
-scene.add(cylinder);
+const sun = new THREE.Mesh(sunGeo, sunMat);
+scene.add(sun);
 
-camera.position.z = 5;
+// --- ここでグループと地球を作成してください ---
+const earthGroup = new THREE.Group();
+scene.add(earthGroup);
+
+const earthGeo = new THREE.SphereGeometry(0.5, 32, 16);
+const earthMat = new THREE.MeshBasicMaterial({
+  color: 0x0000ff,
+  wireframe: true,
+});
+const earth = new THREE.Mesh(earthGeo, earthMat);
+earth.position.x = 4;
+earthGroup.add(earth);
+earthGroup.add(sun);
+
+camera.position.z = 10;
 
 function animate() {
   requestAnimationFrame(animate);
-  // 回転
-  cylinder.rotation.x += 0.01;
-  cylinder.rotation.y += 0.01;
+
+  // --- ここでグループを回転させてください ---
+  earthGroup.rotation.y += 0.03;
+
   renderer.render(scene, camera);
 }
 animate();
