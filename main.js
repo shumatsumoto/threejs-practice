@@ -14,14 +14,18 @@ document.body.appendChild(renderer.domElement);
 const geometry = new THREE.BoxGeometry(2, 2, 2);
 
 // --- ここでWireframeGeometryを使って線画を作成してください ---
+const wireframe = new THREE.WireframeGeometry(geometry);
+const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff });
+const line = new THREE.LineSegments(wireframe, lineMaterial);
+scene.add(line);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
   // 回転させる（変数名は適宜変更）
-  // line.rotation.x += 0.01;
-  // line.rotation.y += 0.01;
+  line.rotation.x += 0.01;
+  line.rotation.y += 0.01;
   renderer.render(scene, camera);
 }
 animate();
