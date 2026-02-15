@@ -11,25 +11,22 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const cubes = [];
-// --- ここで10個のキューブをランダム配置してください ---
-for (let i = 0; i < 10; i++) {
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshBasicMaterial({
-    color: Math.random() * 0xffffff,
-  });
-  const cube = new THREE.Mesh(geometry, material);
-  cube.position.set(
-    (Math.random() - 0.5) * 10,
-    (Math.random() - 0.5) * 10,
-    (Math.random() - 0.5) * 10,
-  );
-  scene.add(cube);
-  cubes.push(cube);
-}
+// クリック判定用の透明な床
+const plane = new THREE.Mesh(
+  new THREE.PlaneGeometry(20, 20),
+  new THREE.MeshBasicMaterial({ visible: false }), // 見えない床
+);
+scene.add(plane);
+
+const cube = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshBasicMaterial({ color: 0x00ff00 }),
+);
+scene.add(cube);
 
 camera.position.z = 10;
 
+const targetPosition = new THREE.Vector3(); // 目標位置
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
@@ -42,16 +39,20 @@ window.addEventListener("click", (event) => {
   raycaster.setFromCamera(mouse, camera);
 
   // 交差するオブジェクトを取得
-  const intersects = raycaster.intersectObjects(cubes);
+  const intersects = raycaster.intersectObject(plane);
 
   if (intersects.length > 0) {
-    // 最初に交差したオブジェクトの色を変更
-    intersects[0].object.material.color.set(Math.random() * 0xffffff);
+    // 目標位置を更新
+    targetPosition.copy(intersects[0].point);
   }
 });
 
 function animate() {
   requestAnimationFrame(animate);
+
+  // --- ここでlerpを使って移動 ---
+  cube.position.lerp(targetPosition, 0.05);
+
   renderer.render(scene, camera);
 }
 animate();
