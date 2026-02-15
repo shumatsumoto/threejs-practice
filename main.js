@@ -11,36 +11,41 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// 太陽（中央）
-const sunGeo = new THREE.SphereGeometry(1, 32, 16);
-const sunMat = new THREE.MeshBasicMaterial({
-  color: 0xff0000,
-  wireframe: true,
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+camera.position.z = 5;
+
+// --- ここでRaycasterなどの準備 ---
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener("click", (event) => {
+  // --- ここでクリック判定処理を記述 ---
+
+  // マウス座標を正規化
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // Raycasterを更新
+  raycaster.setFromCamera(mouse, camera);
+
+  // オブジェクトとの交差を計算
+  const intersects = raycaster.intersectObjects(scene.children);
+  if (intersects.length > 0) {
+    console.log("オブジェクトがクリックされました:", intersects[0].object);
+    // ここでクリックされたオブジェクトに対する処理を行うことができます
+    intersects[0].object.material.color.set(Math.random() * 0xffffff); // 例: クリックされたオブジェクトの色をランダムに変更
+  }
 });
-const sun = new THREE.Mesh(sunGeo, sunMat);
-scene.add(sun);
-
-// --- ここでグループと地球を作成してください ---
-const earthGroup = new THREE.Group();
-scene.add(earthGroup);
-
-const earthGeo = new THREE.SphereGeometry(0.5, 32, 16);
-const earthMat = new THREE.MeshBasicMaterial({
-  color: 0x0000ff,
-  wireframe: true,
-});
-const earth = new THREE.Mesh(earthGeo, earthMat);
-earth.position.x = 4;
-earthGroup.add(earth);
-earthGroup.add(sun);
-
-camera.position.z = 10;
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // --- ここでグループを回転させてください ---
-  earthGroup.rotation.y += 0.03;
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
 
   renderer.render(scene, camera);
 }
