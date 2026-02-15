@@ -11,28 +11,42 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+const cubes = [];
+// --- ここで10個のキューブをランダム配置してください ---
+for (let i = 0; i < 10; i++) {
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshBasicMaterial({
+    color: Math.random() * 0xffffff,
+  });
+  const cube = new THREE.Mesh(geometry, material);
+  cube.position.set(
+    (Math.random() - 0.5) * 10,
+    (Math.random() - 0.5) * 10,
+    (Math.random() - 0.5) * 10,
+  );
+  scene.add(cube);
+  cubes.push(cube);
+}
 
-camera.position.z = 5;
+camera.position.z = 10;
 
-// --- ここでキーボードイベントを処理してください ---
-window.addEventListener("keydown", (event) => {
-  switch (event.key) {
-    case "ArrowUp":
-      cube.position.y += 0.1;
-      break;
-    case "ArrowDown":
-      cube.position.y -= 0.1;
-      break;
-    case "ArrowLeft":
-      cube.position.x -= 0.1;
-      break;
-    case "ArrowRight":
-      cube.position.x += 0.1;
-      break;
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+window.addEventListener("click", (event) => {
+  // マウス座標を正規化
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // レイキャスターを更新
+  raycaster.setFromCamera(mouse, camera);
+
+  // 交差するオブジェクトを取得
+  const intersects = raycaster.intersectObjects(cubes);
+
+  if (intersects.length > 0) {
+    // 最初に交差したオブジェクトの色を変更
+    intersects[0].object.material.color.set(Math.random() * 0xffffff);
   }
 });
 
