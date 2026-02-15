@@ -11,22 +11,22 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// --- ここでドーナツ型を作成してください ---
-const geometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
+// --- ここで円柱を作成してください ---
+const geometry = new THREE.CylinderGeometry(0, 1, 1, 32);
 const material = new THREE.MeshBasicMaterial({
-  color: 0x00ffff,
+  color: 0x00ff00,
   wireframe: true,
 });
-const torus = new THREE.Mesh(geometry, material);
-scene.add(torus);
+const cylinder = new THREE.Mesh(geometry, material);
+scene.add(cylinder);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
   // 回転
-  torus.rotation.x += 0.01;
-  torus.rotation.y += 0.01;
+  cylinder.rotation.x += 0.01;
+  cylinder.rotation.y += 0.01;
   renderer.render(scene, camera);
 }
 animate();
