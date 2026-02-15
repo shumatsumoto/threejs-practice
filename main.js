@@ -11,21 +11,22 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const geometry = new THREE.BoxGeometry(2, 2, 2);
-
-// --- ここでWireframeGeometryを使って線画を作成してください ---
-const wireframe = new THREE.WireframeGeometry(geometry);
-const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff });
-const line = new THREE.LineSegments(wireframe, lineMaterial);
-scene.add(line);
+// --- ここでドーナツ型を作成してください ---
+const geometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
+const material = new THREE.MeshBasicMaterial({
+  color: 0x00ffff,
+  wireframe: true,
+});
+const torus = new THREE.Mesh(geometry, material);
+scene.add(torus);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-  // 回転させる（変数名は適宜変更）
-  line.rotation.x += 0.01;
-  line.rotation.y += 0.01;
+  // 回転
+  torus.rotation.x += 0.01;
+  torus.rotation.y += 0.01;
   renderer.render(scene, camera);
 }
 animate();
