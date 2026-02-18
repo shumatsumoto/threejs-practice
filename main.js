@@ -1,40 +1,51 @@
 import * as THREE from "three";
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  2000
-); // Farを大きく
+
+// --- ここでOrthographicCameraを作成してください ---
+const aspect = window.innerWidth / window.innerHeight;
+const d = 5;
+const camera = new THREE.OrthographicCamera(  
+  -d * aspect, // left
+  d * aspect,  // right
+  d,           // top
+  -d,          // bottom
+  0.1,         // near
+  100          // far
+);
+
+// const aspect = window.innerWidth / window.innerHeight;
+// const d = 5;
+// const camera = ...
+
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// --- ここで星空を作成してください ---
-const starCount = 5000;
-const stars = new THREE.BufferGeometry();
-const starPositions = [];
+// キューブを並べる
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshBasicMaterial({
+  color: 0x00ff00,
+  wireframe: true,
+});
 
-for (let i = 0; i < starCount; i++) {
-  starPositions.push((Math.random() - 0.5) * 2000);
-  starPositions.push((Math.random() - 0.5) * 2000);
-  starPositions.push((Math.random() - 0.5) * 2000);
+for (let i = 0; i < 5; i++) {
+  const cube = new THREE.Mesh(geometry, material);
+  cube.position.z = -i * 3; // 奥へ
+  cube.position.x = i * 0.5; // 少しずらす
+  scene.add(cube);
 }
 
-stars.setAttribute("position", new THREE.Float32BufferAttribute(starPositions, 3));
+// グリッド
+const gridHelper = new THREE.GridHelper(20, 20);
+scene.add(gridHelper);
 
-const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 1 });
-const starSystem = new THREE.Points(stars, starMaterial);
-scene.add(starSystem);
-
-camera.position.z = 5;
+// カメラ位置設定
+camera.position.set(5, 5, 5);
+camera.lookAt(0, 0, 0);
 
 function animate() {
   requestAnimationFrame(animate);
-  // 星空を回転
-  starSystem.rotation.y += 0.0001;
-
   renderer.render(scene, camera);
 }
 animate();
