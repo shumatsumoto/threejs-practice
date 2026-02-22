@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -11,32 +12,45 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const geometry = new THREE.BoxGeometry(2, 2, 2);
+// ライトがないと暗くて見えないことが多い
+const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+scene.add(ambientLight);
 
-// --- ここで6つのマテリアルを作成し、配列にしてください ---
-const materials = [
-  new THREE.MeshBasicMaterial({ color: 0xff0000 }), // 赤
-  new THREE.MeshBasicMaterial({ color: 0x00ff00 }), // 緑
-  new THREE.MeshBasicMaterial({ color: 0x0000ff }), // 青
-  new THREE.MeshBasicMaterial({ color: 0xffff00 }), // 黄
-  new THREE.MeshBasicMaterial({ color: 0xff00ff }), // マゼンタ
-  new THREE.MeshBasicMaterial({ color: 0x00ffff }), // シアン
-];
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+directionalLight.position.set(5, 5, 5);
+scene.add(directionalLight);
 
-const cube = new THREE.Mesh(geometry, materials);
-scene.add(cube);
+// GLTFLoaderの作成
+const loader = new GLTFLoader();
 
+// モデルのロード
+loader.load(
+  "https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf",
+  (gltf) => {
+    // ロード完了時の処理
+    const model = gltf.scene;
 
+    // サイズ調整（モデルによっては巨大だったり極小だったりする）
+    model.scale.set(1.5, 1.5, 1.5);
 
-// --- ここで配列を使ってメッシュを作成 ---
+    scene.add(model);
+  },
+  undefined, // 進捗コールバック（省略可）
+  (error) => {
+    console.error("An error happened", error);
+  }
+);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-  // 回転
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
+
+  // モデルがロードされた後に回転させる
+  if (scene.children.length > 2) {
+    const model = scene.children[2]; // モデルは最初の2つのライトの後に追加される
+    model.rotation.y += 0.01; // Y軸回転
+  }
   renderer.render(scene, camera);
 }
 animate();
