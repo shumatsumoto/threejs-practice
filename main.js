@@ -11,26 +11,34 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// --- ここでスカイボックスを作成 ---
-const loader = new THREE.CubeTextureLoader();
-const path = "https://threejs.org/examples/textures/cube/Bridge2/";
-const urls = [
-  "posx.jpg",
-  "negx.jpg",
-  "posy.jpg",
-  "negy.jpg",
-  "posz.jpg",
-  "negz.jpg",
-];
-const texture = loader.load(urls.map(url => path + url));
-scene.background = texture; // スカイボックスを背景に設定
+// 1. Canvasの作成と描画
+const canvas = document.createElement("canvas");
+canvas.width = 256;
+canvas.height = 256;
+const ctx = canvas.getContext("2d");
+
+// --- ここでCanvasに背景と文字を描画してください ---
+ctx.fillStyle = "blue";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.fillStyle = "white";
+ctx.font = "28px sans-serif";
+ctx.fillText("Hello, World!", 50, 128);
+
+// 2. テクスチャの作成
+const texture = new THREE.CanvasTexture(canvas);
+
+// 3. マテリアルとメッシュの作成
+const material = new THREE.MeshBasicMaterial({ map: texture });
+const geometry = new THREE.BoxGeometry();
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-  // カメラを回して確認
-  camera.rotation.y += 0.002;
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
   renderer.render(scene, camera);
 }
 animate();
