@@ -11,43 +11,34 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Canvas作成
-const canvas = document.createElement("canvas");
-canvas.width = 256;
-canvas.height = 256;
-const ctx = canvas.getContext("2d");
+const geometry = new THREE.BufferGeometry();
+const vertices = new Float32Array([
+  -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0,
+]);
+geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
 
-const texture = new THREE.CanvasTexture(canvas);
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(2, 2, 2),
-  new THREE.MeshBasicMaterial({ map: texture })
-);
-scene.add(cube);
+// --- ここで頂点カラーを設定 ---
+// const colors = new Float32Array([ ... ]);
+// geometry.setAttribute('color', ...);
+
+// --- ここで頂点カラーを設定 ---
+const colors = new Float32Array([
+  1.0, 0.0, 0.0, // 赤
+  0.0, 1.0, 0.0, // 緑
+  0.0, 0.0, 1.0, // 青
+]);
+geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+// --- マテリアルで vertexColors: true を有効化 ---
+const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: true });
+
+const triangle = new THREE.Mesh(geometry, material);
+scene.add(triangle);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-
-  // --- ここでCanvasを更新 ---
-  // 1. 背景クリア
-  ctx.fillStyle = "#ddd";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // 2. 文字描画（Date.now()など）
-  ctx.fillStyle = "#333";
-  ctx.font = "20px Arial";
-  
-  // センターに時間を表示
-  ctx.textAlign = "center";
-  ctx.fillText(new Date().toLocaleTimeString(), canvas.width / 2, canvas.height / 2);
-
-  // 3. texture.needsUpdate = true;
-  texture.needsUpdate = true;
-
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
-
   renderer.render(scene, camera);
 }
 animate();
