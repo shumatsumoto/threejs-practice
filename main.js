@@ -1,9 +1,4 @@
 import * as THREE from "three";
-import { DotScreenShader, ShaderPass } from "three/examples/jsm/Addons.js";
-// --- ここで必要なクラスをインポート ---
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-// ...
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -16,34 +11,37 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(2, 2, 2),
-  new THREE.MeshNormalMaterial()
-);
-scene.add(cube);
+// --- シェーダー定義 ---
+const vShader = `
+    void main() {
+        // ここで頂点の位置を変換して出力
+        
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+`;
 
-// --- ここでComposerを設定 ---
-// const composer = new EffectComposer(renderer);
-// composer.addPass(new RenderPass(scene, camera));
-// ...
+const fShader = `
+    void main() {
+        // ここで色を出力
+        gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); // 赤色
+    }
+`;
 
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-// composer.addPass(...); // ここに他のエフェクトパスを追加
+// --- マテリアル作成 ---
+const material = new THREE.ShaderMaterial({
+  vertexShader: vShader,
+  fragmentShader: fShader,
+});
 
-const effectPass = new ShaderPass(DotScreenShader);
-effectPass.uniforms["scale"].value = 40; // ドットの大きさを調整
-composer.addPass(effectPass);
-
+const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), material);
+scene.add(mesh);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
-
-  // renderer.render(scene, camera); の代わりに
-  composer.render();
+  mesh.rotation.x += 0.01;
+  mesh.rotation.y += 0.01;
+  renderer.render(scene, camera);
 }
 animate();
