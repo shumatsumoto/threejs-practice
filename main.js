@@ -11,34 +11,31 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+// --- ここでジオメトリとパーティクルを作成 ---
+// const geometry = new THREE.BufferGeometry();
+// const count = 1000;
+// const positions = new Float32Array(count * 3);
+// ...
+
 const geometry = new THREE.BufferGeometry();
-const vertices = new Float32Array([
-  -1.0, -1.0, 0.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0,
-]);
-geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+const count = 1000;
+const positions = new Float32Array(count * 3);
+for (let i = 0; i < count * 3; i++) {
+  positions[i] = (Math.random() - 0.5) * 10;
+}
+geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
-// --- ここで頂点カラーを設定 ---
-// const colors = new Float32Array([ ... ]);
-// geometry.setAttribute('color', ...);
+const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
+const points = new THREE.Points(geometry, material);
+scene.add(points);
 
-// --- ここで頂点カラーを設定 ---
-const colors = new Float32Array([
-  1.0, 0.0, 0.0, // 赤
-  0.0, 1.0, 0.0, // 緑
-  0.0, 0.0, 1.0, // 青
-]);
-geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-
-// --- マテリアルで vertexColors: true を有効化 ---
-const material = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: true });
-
-const triangle = new THREE.Mesh(geometry, material);
-scene.add(triangle);
-
-camera.position.z = 5;
+camera.position.z = 15;
 
 function animate() {
   requestAnimationFrame(animate);
+  // 回転させると綺麗
+  points.rotation.x += 0.01;
+  points.rotation.y += 0.01;
   renderer.render(scene, camera);
 }
 animate();
