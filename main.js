@@ -1,4 +1,9 @@
 import * as THREE from "three";
+import { DotScreenShader, ShaderPass } from "three/examples/jsm/Addons.js";
+// --- ここで必要なクラスをインポート ---
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+// ...
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -11,46 +16,34 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// --- ここでカーブを作成 ---
-// const curve = new THREE.CatmullRomCurve3([ ... ]);
-
-const curve = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(-5, 0, 0),
-  new THREE.Vector3(-2.5, 2.5, 0),
-  new THREE.Vector3(0, 0, 0),
-  new THREE.Vector3(2.5, -2.5, 0),
-  new THREE.Vector3(5, 0, 0),
-]);
-
-const curveMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff });
-const curveGeometry = new THREE.BufferGeometry().setFromPoints(
-  curve.getPoints(100)
+const cube = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2, 2),
+  new THREE.MeshNormalMaterial()
 );
-const curveLine = new THREE.Line(curveGeometry, curveMaterial);
-scene.add(curveLine);
+scene.add(cube);
 
-// 移動する物体
-const sphere = new THREE.Mesh(
-  new THREE.SphereGeometry(0.2),
-  new THREE.MeshBasicMaterial({ color: 0xff0000 })
-);
-scene.add(sphere);
+// --- ここでComposerを設定 ---
+// const composer = new EffectComposer(renderer);
+// composer.addPass(new RenderPass(scene, camera));
+// ...
 
-let progress = 0;
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+// composer.addPass(...); // ここに他のエフェクトパスを追加
 
-camera.position.z = 10;
-camera.position.y = 5;
-camera.lookAt(0, 0, 0);
+const effectPass = new ShaderPass(DotScreenShader);
+effectPass.uniforms["scale"].value = 40; // ドットの大きさを調整
+composer.addPass(effectPass);
+
+
+camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
 
-  // --- ここでprogressを増やし、sphereの位置を更新 ---
-  progress += 0.01;
-  if (progress > 1) progress = 0;
-  const point = curve.getPointAt(progress);
-  sphere.position.copy(point);
-
-  renderer.render(scene, camera);
+  // renderer.render(scene, camera); の代わりに
+  composer.render();
 }
 animate();
