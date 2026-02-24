@@ -11,34 +11,35 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const material = new THREE.MeshNormalMaterial({ wireframe: true });
-const lod = new THREE.LOD();
+const loader = new THREE.TextureLoader();
+// const map = loader.load('...');
+// const material = new THREE.SpriteMaterial({ map: map });
+// const sprite = new THREE.Sprite(material);
 
-// レベル1: 高精細（距離0以上）
-const geoHigh = new THREE.IcosahedronGeometry(2, 3);
-const meshHigh = new THREE.Mesh(geoHigh, material);
-lod.addLevel(meshHigh, 0);
+// scene.add(sprite);
 
-// レベル2: 中程度（距離10以上）
-const geoMed = new THREE.IcosahedronGeometry(2, 1);
-const meshMed = new THREE.Mesh(geoMed, material);
-lod.addLevel(meshMed, 10);
+const map = loader.load("https://threejs.org/examples/textures/sprite.png");
+const material = new THREE.SpriteMaterial({ map: map });
+const sprite = new THREE.Sprite(material);
+scene.add(sprite);
 
-// レベル3: 低精細（距離20以上）
-const geoLow = new THREE.IcosahedronGeometry(2, 0);
-const meshLow = new THREE.Mesh(geoLow, material);
-lod.addLevel(meshLow, 20);
+camera.position.z = 5;
 
-scene.add(lod);
+const cube = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+);
+scene.add(cube);
 
-camera.position.z = 30;
+cube.position.x = 2;
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // カメラを自動で前後に移動
-  // 距離が変化すると、ポリゴンの細かさが変わるのがわかる
-  camera.position.z = 15 + Math.sin(Date.now() * 0.001) * 12;
+  // カメラを回して確認
+  camera.position.x = Math.sin(Date.now() * 0.001) * 5;
+  camera.position.z = Math.cos(Date.now() * 0.001) * 5;
+  camera.lookAt(0, 0, 0);
 
   renderer.render(scene, camera);
 }
