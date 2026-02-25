@@ -21,17 +21,27 @@ const vShader = `
 
 const fShader = `
     varying vec2 vUv;
+    uniform float uTime;
+    
+    // 乱数生成関数
+    float random(vec2 st) {
+        return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+    }
+
     void main() {
-        // --- ここでグラデーションを作成 ---
-        vec3 color = mix(vec3(1.0, .0, 0.0), vec3(0.0, 0.0, 1.0), vUv.y);
-        
-        gl_FragColor = vec4(color, 1.0);
+        // --- ここでノイズを出力 ---
+        vec2 st = vUv * 10.0;
+        float n = random(st + uTime);
+        gl_FragColor = vec4(vec3(n), 1.0);
     }
 `;
 
 const material = new THREE.ShaderMaterial({
   vertexShader: vShader,
   fragmentShader: fShader,
+  uniforms: {
+    uTime: { value: 0.0 }
+  }
 });
 
 const plane = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), material);
@@ -41,6 +51,7 @@ camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
+  material.uniforms.uTime.value += 0.01;
   renderer.render(scene, camera);
 }
 animate();
