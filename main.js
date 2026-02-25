@@ -11,6 +11,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+// シェーダーは演習56をベースに改良
 const vShader = `
     varying vec3 vNormal;
     varying vec3 vViewPosition;
@@ -26,34 +27,35 @@ const fShader = `
     varying vec3 vNormal;
     varying vec3 vViewPosition;
     void main() {
-        // 法線と視線の内積（0〜1）
-        // 正面から見ると1、横から見ると0
         float dotProduct = dot(normalize(vNormal), normalize(vViewPosition));
+        float rim = pow(1.0 - dotProduct, 2.0);
         
-        // 反転して累乗することで、エッジを鋭く光らせる
-        float fresnel = pow(1.0 - dotProduct, 3.0);
+        // --- ここでベース色とリム色を合成 ---
+        vec3 baseColor = vec3(0.0, 0.5, 0.0); // ベース色
+        vec3 rimColor = vec3(1.0, 1.0, 0.0); // リム色
+        vec3 color = mix(baseColor, rimColor, rim);
         
-        // 水色で光らせる
-        gl_FragColor = vec4(0.0, 0.8, 1.0, fresnel);
+        gl_FragColor = vec4(color, 1.0);
     }
 `;
 
 const material = new THREE.ShaderMaterial({
   vertexShader: vShader,
   fragmentShader: fShader,
-  transparent: true,
-  blending: THREE.AdditiveBlending, // 加算合成
-  side: THREE.DoubleSide,
 });
 
-const sphere = new THREE.Mesh(new THREE.SphereGeometry(2, 32, 32), material);
-scene.add(sphere);
+const mesh = new THREE.Mesh(
+  new THREE.TorusKnotGeometry(1, 0.3, 100, 16),
+  material
+);
+scene.add(mesh);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-  sphere.rotation.y += 0.005;
+  mesh.rotation.x += 0.01;
+  mesh.rotation.y += 0.01;
   renderer.render(scene, camera);
 }
 animate();
