@@ -12,39 +12,48 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const vShader = `
+    varying vec3 vNormal;
+    varying vec3 vViewPosition;
     void main() {
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vNormal = normalize(normalMatrix * normal);
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vViewPosition = -mvPosition.xyz;
+        gl_Position = projectionMatrix * mvPosition;
     }
 `;
 
 const fShader = `
-    uniform float uTime;
+    varying vec3 vNormal;
+    varying vec3 vViewPosition;
     void main() {
-        // --- ここで色を計算 ---
-        float r = 0.5 + 0.5 * abs(sin(uTime));
-        float g = 0.5 + 0.5 * abs(sin(uTime + 2.0));
-        float b = 0.5 + 0.5 * abs(sin(uTime + 4.0));
-        gl_FragColor = vec4(r, g, b, 1.0);
+        // 法線と視線の内積（0〜1）
+        // 正面から見ると1、横から見ると0
+        float dotProduct = dot(normalize(vNormal), normalize(vViewPosition));
+        
+        // 反転して累乗することで、エッジを鋭く光らせる
+        float fresnel = pow(1.0 - dotProduct, 3.0);
+        
+        // 水色で光らせる
+        gl_FragColor = vec4(0.0, 0.8, 1.0, fresnel);
     }
 `;
 
-const uniforms = { uTime: { value: 0.0 } };
 const material = new THREE.ShaderMaterial({
   vertexShader: vShader,
   fragmentShader: fShader,
-  uniforms: uniforms,
+  transparent: true,
+  blending: THREE.AdditiveBlending, // 加算合成
+  side: THREE.DoubleSide,
 });
 
-const cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), material);
-scene.add(cube);
+const sphere = new THREE.Mesh(new THREE.SphereGeometry(2, 32, 32), material);
+scene.add(sphere);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-  material.uniforms.uTime.value += 0.05;
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
+  sphere.rotation.y += 0.005;
   renderer.render(scene, camera);
 }
 animate();
