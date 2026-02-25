@@ -12,43 +12,35 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const vShader = `
-    uniform float uTime;
+    varying vec2 vUv;
     void main() {
-        vec3 pos = position;
-        // --- ここでpos.zを操作 ---
-        pos.z = sin(uTime + pos.x * 2.0) * 0.5;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
 `;
 
 const fShader = `
+    varying vec2 vUv;
     void main() {
-        gl_FragColor = vec4(0.0, 0.5, 1.0, 1.0);
+        // --- ここでグラデーションを作成 ---
+        vec3 color = mix(vec3(1.0, .0, 0.0), vec3(0.0, 0.0, 1.0), vUv.y);
+        
+        gl_FragColor = vec4(color, 1.0);
     }
 `;
-
-const uniforms = {
-  uTime: { value: 0.0 },
-};
 
 const material = new THREE.ShaderMaterial({
   vertexShader: vShader,
   fragmentShader: fShader,
-  uniforms: uniforms,
-  wireframe: true, // 動きが見やすいように
 });
 
-const plane = new THREE.Mesh(new THREE.PlaneGeometry(5, 5, 32, 32), material);
+const plane = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), material);
 scene.add(plane);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-
-  // --- ここでuTimeを更新 ---
-  uniforms.uTime.value += 0.01;
-
   renderer.render(scene, camera);
 }
 animate();
