@@ -11,62 +11,51 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const texture = new THREE.TextureLoader().load(
-  "https://threejs.org/examples/textures/sprites/spark1.png"
-);
-
-const material = new THREE.SpriteMaterial({
-  map: texture,
-  color: 0xffaa00,
-  blending: THREE.AdditiveBlending,
-  transparent: true,
-});
-
+// --- 爆発用パーティクル管理 ---
 const particles = [];
-const count = 100;
 
-for (let i = 0; i < count; i++) {
-  const sprite = new THREE.Sprite(material);
-  // 初期化
-  resetParticle(sprite);
-  // ランダムなタイミングで開始させるため寿命をばらつかせる
-  sprite.userData.life = Math.random();
+function explode() {
+  for (let i = 0; i < 30; i++) {
+    const geometry = new THREE.SphereGeometry(0.1, 8, 8);
+    const material = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(Math.random(), Math.random(), Math.random()),
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
 
-  scene.add(sprite);
-  particles.push(sprite);
+    particles.push({
+      mesh,
+      velocity: new THREE.Vector3(
+        (Math.random() - 0.5) * 0.3,
+        (Math.random() - 0.5) * 0.3,
+        (Math.random() - 0.5) * 0.3
+      ),
+      life: 100,
+    });
+  }
 }
 
-function resetParticle(p) {
-  p.position.set(
-    (Math.random() - 0.5) * 0.5, // 中心付近から
-    0,
-    (Math.random() - 0.5) * 0.5
-  );
-  p.userData.life = 1.0;
-  p.userData.velocity = new THREE.Vector3(
-    (Math.random() + 0.5) * 0.02,
-    Math.random() * 0.05 - 0.02, // 上昇
-    (Math.random() + 0.5) * 0.02
-  );
-  p.scale.setScalar(1.0); // サイズリセット
-}
+// クリックで爆発
+window.addEventListener("click", explode);
 
-camera.position.z = 5;
+camera.position.z = 10;
 
 function animate() {
   requestAnimationFrame(animate);
 
-  particles.forEach((p) => {
-    p.userData.life -= 0.02; // 寿命を減らす
+  // --- パーティクル更新 ---
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.mesh.position.add(p.velocity);
+    p.life -= 1;
 
-    if (p.userData.life <= 0) {
-      resetParticle(p);
-    } else {
-      p.position.add(p.userData.velocity);
-      p.scale.setScalar(p.userData.life * 2); // 消えるにつれて小さく
-      p.material.opacity = p.userData.life;
+    if (p.life <= 0) {
+      scene.remove(p.mesh);
+      p.mesh.geometry.dispose();
+      p.mesh.material.dispose();
+      particles.splice(i, 1);
     }
-  });
+  }
 
   renderer.render(scene, camera);
 }
