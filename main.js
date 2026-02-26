@@ -11,50 +11,63 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const vShader = `
-    uniform float uTime;
-    varying float vElevation;
-    void main() {
-        vec3 pos = position;
-        // 複雑な波を作る
-        float wave1 = sin(pos.x * 2.0 + uTime);
-        float wave2 = sin(pos.y * 1.5 + uTime * 0.5);
-        
-        pos.z = (wave1 + wave2) * 0.2;
-        vElevation = pos.z;
-        
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-    }
-`;
+const texture = new THREE.TextureLoader().load(
+  "https://threejs.org/examples/textures/sprites/spark1.png"
+);
 
-const fShader = `
-    varying float vElevation;
-    void main() {
-        // --- ここで高さに応じた色を決める ---
-        vec3 color = vec3(0.0, 0.3, 1.0) + vElevation * 0.5; // 青色をベースに高さで色を変える
-        float alpha = 0.5 + vElevation * 0.5; // 高さに応じて透明度も変える
-        gl_FragColor = vec4(color, alpha);
-    }
-`;
-
-const material = new THREE.ShaderMaterial({
-  vertexShader: vShader,
-  fragmentShader: fShader,
-  uniforms: { uTime: { value: 0 } },
+const material = new THREE.SpriteMaterial({
+  map: texture,
+  color: 0xffaa00,
+  blending: THREE.AdditiveBlending,
   transparent: true,
-  side: THREE.DoubleSide,
 });
 
-const plane = new THREE.Mesh(new THREE.PlaneGeometry(5, 5, 64, 64), material);
-plane.rotation.x = -Math.PI / 2; // 水平にする
-scene.add(plane);
+const particles = [];
+const count = 100;
 
-camera.position.set(0, 3, 5);
-camera.lookAt(0, 0, 0);
+for (let i = 0; i < count; i++) {
+  const sprite = new THREE.Sprite(material);
+  // 初期化
+  resetParticle(sprite);
+  // ランダムなタイミングで開始させるため寿命をばらつかせる
+  sprite.userData.life = Math.random();
+
+  scene.add(sprite);
+  particles.push(sprite);
+}
+
+function resetParticle(p) {
+  p.position.set(
+    (Math.random() - 0.5) * 0.5, // 中心付近から
+    0,
+    (Math.random() - 0.5) * 0.5
+  );
+  p.userData.life = 1.0;
+  p.userData.velocity = new THREE.Vector3(
+    (Math.random() + 0.5) * 0.02,
+    Math.random() * 0.05 - 0.02, // 上昇
+    (Math.random() + 0.5) * 0.02
+  );
+  p.scale.setScalar(1.0); // サイズリセット
+}
+
+camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-  material.uniforms.uTime.value += 0.05;
+
+  particles.forEach((p) => {
+    p.userData.life -= 0.02; // 寿命を減らす
+
+    if (p.userData.life <= 0) {
+      resetParticle(p);
+    } else {
+      p.position.add(p.userData.velocity);
+      p.scale.setScalar(p.userData.life * 2); // 消えるにつれて小さく
+      p.material.opacity = p.userData.life;
+    }
+  });
+
   renderer.render(scene, camera);
 }
 animate();
