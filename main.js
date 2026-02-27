@@ -1,4 +1,7 @@
 import * as THREE from "three";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -9,54 +12,33 @@ const camera = new THREE.PerspectiveCamera(
 );
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+// トーンマッピング設定（ブルームと相性が良い）
+renderer.toneMapping = THREE.ReinhardToneMapping;
 document.body.appendChild(renderer.domElement);
 
-// --- 爆発用パーティクル管理 ---
-const particles = [];
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // 明るい緑
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
 
-function explode() {
-  for (let i = 0; i < 30; i++) {
-    const geometry = new THREE.SphereGeometry(0.1, 8, 8);
-    const material = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(Math.random(), Math.random(), Math.random()),
-    });
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
+// --- ここでComposerとBloomPassを設定 ---
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
 
-    particles.push({
-      mesh,
-      velocity: new THREE.Vector3(
-        (Math.random() - 0.5) * 0.3,
-        (Math.random() - 0.5) * 0.3,
-        (Math.random() - 0.5) * 0.3
-      ),
-      life: 100,
-    });
-  }
-}
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  2.5, // 強さを増加
+  0.8, // 半径を増加
+  0.5 // 閾値を低くして、より多くの部分がブルームする
+);
+composer.addPass(bloomPass);
 
-// クリックで爆発
-window.addEventListener("click", explode);
-
-camera.position.z = 10;
+camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-
-  // --- パーティクル更新 ---
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    p.mesh.position.add(p.velocity);
-    p.life -= 1;
-
-    if (p.life <= 0) {
-      scene.remove(p.mesh);
-      p.mesh.geometry.dispose();
-      p.mesh.material.dispose();
-      particles.splice(i, 1);
-    }
-  }
-
-  renderer.render(scene, camera);
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
+  composer.render();
 }
 animate();
