@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
-import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
-import { RGBShiftShader } from "three/examples/jsm/shaders/RGBShiftShader";
+import { BokehPass } from "three/examples/jsm/postprocessing/BokehPass";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -15,27 +14,36 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const cube = new THREE.Mesh(
-  new THREE.BoxGeometry(2, 2, 2),
-  new THREE.MeshNormalMaterial()
-);
-scene.add(cube);
+// キューブを散らす
+for (let i = 0; i < 100; i++) {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshNormalMaterial()
+  );
+  mesh.position.set(
+    (Math.random() - 0.5) * 20,
+    (Math.random() - 0.5) * 20,
+    (Math.random() - 0.5) * 20 - 10
+  );
+  scene.add(mesh);
+}
 
-// --- ComposerとRGBShift ---
+// --- ComposerとBokehPass ---
 const composer = new EffectComposer(renderer);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-const rgbShiftPass = new ShaderPass(RGBShiftShader);
-rgbShiftPass.uniforms["amount"].value = 0.005; // シフト量を調整
-composer.addPass(rgbShiftPass);
+const bokehPass = new BokehPass(scene, camera, {
+  focus: 1.0,
+  aperture: 0.005,
+  maxblur: 3.0,
+});
+composer.addPass(bokehPass);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
   composer.render();
 }
 animate();
