@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
-import { GlitchPass } from "three/examples/jsm/postprocessing/GlitchPass";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
+import { RGBShiftShader } from "three/examples/jsm/shaders/RGBShiftShader";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -20,12 +21,14 @@ const cube = new THREE.Mesh(
 );
 scene.add(cube);
 
-// --- ComposerとGlitchPass ---
+// --- ComposerとRGBShift ---
 const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
 
-const glitchPass = new GlitchPass();
-composer.addPass(glitchPass); 
+const rgbShiftPass = new ShaderPass(RGBShiftShader);
+rgbShiftPass.uniforms["amount"].value = 0.005; // シフト量を調整
+composer.addPass(rgbShiftPass);
 
 camera.position.z = 5;
 
