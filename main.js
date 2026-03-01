@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -9,24 +10,47 @@ const camera = new THREE.PerspectiveCamera(
 );
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.body.appendChild(renderer.domElement);
 
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(5, 5, 5);
-scene.add(light);
+const controls = new OrbitControls(camera, renderer.domElement);
 
-// --- ここでフラットシェーディングのマテリアルを作成 ---
-const material = new THREE.MeshStandardMaterial({ ... THREE.MeshStandardMaterial.prototype, flatShading: true });
+// 環境マップ（これがないと金属が黒くなる）
+const loader = new THREE.TextureLoader();
+loader.load(
+  "https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg",
+  (texture) => {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = texture;
+    scene.background = texture;
+  }
+);
 
-const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(2, 1), material);
-scene.add(mesh);
+const geometry = new THREE.SphereGeometry(0.5, 32, 32);
 
-camera.position.z = 5;
+// 縦横に並べる
+for (let x = 0; x <= 5; x++) {
+  for (let y = 0; y <= 5; y++) {
+    const metalness = x / 5;
+    const roughness = y / 5;
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      metalness: metalness,
+      roughness: roughness,
+    });
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set((x - 2.5) * 1.2, (y - 2.5) * 1.2, 0);
+    scene.add(mesh);
+  }
+}
+
+camera.position.z = 8;
 
 function animate() {
   requestAnimationFrame(animate);
-  mesh.rotation.x += 0.005;
-  mesh.rotation.y += 0.005;
+  controls.update();
   renderer.render(scene, camera);
 }
 animate();
