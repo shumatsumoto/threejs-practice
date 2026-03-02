@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Reflector } from "three/examples/jsm/objects/Reflector.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -12,31 +12,38 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const box = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1, 1),
-  new THREE.MeshNormalMaterial()
+const controls = new OrbitControls(camera, renderer.domElement);
+
+const loader = new THREE.TextureLoader();
+// 環境マップ用画像
+const texture = loader.load(
+  "https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg"
 );
-box.position.y = 1;
-scene.add(box);
 
-// --- ここでReflectorを作成 ---
-const geometry = new THREE.PlaneGeometry(10, 10);
-const options = {
-  clipBias: 0.003,
-  textureWidth: window.innerWidth * window.devicePixelRatio,
-  textureHeight: window.innerHeight * window.devicePixelRatio,
-  color: 0x889999
-};
-const mirror = new Reflector(geometry, options);
-mirror.rotation.x = -Math.PI / 2;
-scene.add(mirror);
+// --- ここでマッピングモードを変更 ---
+texture.mapping = THREE.EquirectangularReflectionMapping;
 
-camera.position.set(0, 3, 5);
-camera.lookAt(0, 0, 0);
+scene.background = texture;
+
+// --- ここでマテリアル作成 ---
+const material = new THREE.MeshBasicMaterial({ 
+  envMap: texture,
+  combine: THREE.MixOperation,
+  reflectivity: 0.9
+}); 
+material.refractionRatio = 0.98;
+
+const sphere = new THREE.Mesh(
+  new THREE.SphereGeometry(2, 32, 32),
+  material
+);
+scene.add(sphere);
+
+camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
-  box.rotation.y += 0.01;
+  controls.update();
   renderer.render(scene, camera);
 }
 animate();
