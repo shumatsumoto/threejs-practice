@@ -15,6 +15,7 @@ document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
+// 環境マップ（質感向上用）
 const loader = new THREE.TextureLoader();
 loader.load(
   "https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg",
@@ -25,13 +26,19 @@ loader.load(
   },
 );
 
-// --- ここでカーペイント風マテリアルを作成 ---
+// 背後からのライト
+const dirLight = new THREE.DirectionalLight(0xffffff, 5);
+dirLight.position.set(0, 2, -5);
+scene.add(dirLight);
+
 const material = new THREE.MeshPhysicalMaterial({
-  color: 0xff0000,
-  metalness: 1.0,
+  color: 0xffffff,
   roughness: 0.2,
-  clearcoat: 1.0,
-  clearcoatRoughness: 0.2,
+  metalness: 0,
+  transmission: 0.8, // 透過させる
+  thickness: 2.0, // 厚み
+  attenuationColor: 0xffaa00, // 内部でオレンジ色になる
+  attenuationDistance: 1.0, // 色が変化する距離
 });
 
 const mesh = new THREE.Mesh(
@@ -45,6 +52,9 @@ camera.position.z = 5;
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+
+  mesh.rotation.y += 0.005;
+
   renderer.render(scene, camera);
 }
 animate();
