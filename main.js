@@ -10,40 +10,50 @@ const camera = new THREE.PerspectiveCamera(
 );
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
+// 環境マップ
 const loader = new THREE.TextureLoader();
-// 環境マップ用画像
-const texture = loader.load(
-  "https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg"
+loader.load(
+  "https://threejs.org/examples/textures/2294472375_24a3b8ef46_o.jpg",
+  (texture) => {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    scene.environment = texture;
+    scene.background = texture;
+  }
 );
 
-// --- ここでマッピングモードを変更 ---
-texture.mapping = THREE.EquirectangularReflectionMapping;
+// 中身（透けて見えるもの）
+const innerCube = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshNormalMaterial()
+);
+scene.add(innerCube);
 
-scene.background = texture;
-
-// --- ここでマテリアル作成 ---
-const material = new THREE.MeshBasicMaterial({ 
-  envMap: texture,
-  combine: THREE.MixOperation,
-  reflectivity: 0.9
-}); 
-material.refractionRatio = 0.98;
-
-const sphere = new THREE.Mesh(
-  new THREE.SphereGeometry(2, 32, 32),
+// --- ここでガラスの球体を作成 ---
+const material = new THREE.MeshPhysicalMaterial({ 
+  color: 0xffffff,
+  metalness: 0,
+  roughness: 0,
+  transmission: 1, // ガラスの透過性
+  transparent: true, // 透明にする
+  opacity: 1, // 不透明度
+});
+const glassSphere = new THREE.Mesh(
+  new THREE.SphereGeometry(1.5, 32, 32),
   material
 );
-scene.add(sphere);
+scene.add(glassSphere);
 
 camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+  innerCube.rotation.x += 0.01;
   renderer.render(scene, camera);
 }
 animate();
