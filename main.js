@@ -1,4 +1,8 @@
 import * as THREE from "three";
+import {
+  Lensflare,
+  LensflareElement,
+} from "three/examples/jsm/objects/Lensflare";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -9,73 +13,50 @@ const camera = new THREE.PerspectiveCamera(
 );
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
+// 背景を黒くしないとフレアが見えにくい
+scene.background = new THREE.Color(0x000000);
 document.body.appendChild(renderer.domElement);
 
-// スポットライト
-const spotLight = new THREE.SpotLight(0xffffff, 2);
-spotLight.position.set(0, 5, 0);
-spotLight.angle = Math.PI / 6;
-spotLight.penumbra = 0.5;
-scene.add(spotLight);
+const light = new THREE.PointLight(0xffffff, 1.5, 2000);
+light.position.set(0, 0, -20);
+scene.add(light);
 
-// 床
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(20, 20),
-  new THREE.MeshStandardMaterial({ color: 0x222222 }),
+const textureLoader = new THREE.TextureLoader();
+const texture0 = textureLoader.load(
+  "https://threejs.org/examples/textures/lensflare/lensflare0.png",
 );
-floor.rotation.x = -Math.PI / 2;
-scene.add(floor);
+const texture3 = textureLoader.load(
+  "https://threejs.org/examples/textures/lensflare/lensflare3.png",
+);
 
-// ボリュームライト用コーン
-const height = 5;
-const radius = Math.tan(spotLight.angle) * height;
-const geometry = new THREE.ConeGeometry(radius, height, 32, 1, true); // 底面なし
-geometry.translate(0, -height / 2, 0); // 頂点を原点に
-geometry.rotateX(-Math.PI / 2); // スポットライトの向きに合わせる（下向き）
+const lensflare = new Lensflare();
 
-const vShader = `
-    varying vec2 vUv;
-    void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-`;
+// メインの光
+lensflare.addElement(new LensflareElement(texture0, 700, 0));
 
-const fShader = `
-    varying vec2 vUv;
-    void main() {
-        // UVのY座標（高さ方向）を使ってフェードさせる
-        // 根元(1.0) -> 先端(0.0)
-        float alpha = pow(vUv.y, 2.0); 
-        
-        // 端の方も少しフェードさせるとより自然
-        
-        gl_FragColor = vec4(1.0, 1.0, 0.8, alpha * 0.5);
-    }
-`;
+// ゴースト（小さい光の輪）
+lensflare.addElement(new LensflareElement(texture3, 60, 0.6));
+lensflare.addElement(new LensflareElement(texture3, 70, 0.7));
+lensflare.addElement(new LensflareElement(texture3, 120, 0.9));
+lensflare.addElement(new LensflareElement(texture3, 70, 1.0));
 
-const material = new THREE.ShaderMaterial({
-  vertexShader: vShader,
-  fragmentShader: fShader,
-  transparent: true,
-  depthWrite: false, // 奥の物体を隠さない
-  blending: THREE.AdditiveBlending,
-  side: THREE.DoubleSide,
-});
+light.add(lensflare);
 
-const cone = new THREE.Mesh(geometry, material);
-cone.position.copy(spotLight.position);
-// スポットライトと同じ向きにする必要があるが、今回は真下なのでそのまま
-scene.add(cone);
+// 遮蔽物（これに隠れるとフレアも消える）
+const box = new THREE.Mesh(
+  new THREE.BoxGeometry(5, 5, 5),
+  new THREE.MeshNormalMaterial(),
+);
+box.position.z = -10;
+scene.add(box);
 
-camera.position.set(0, 2, 10);
+camera.position.z = 5;
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // ライトを揺らす
-  spotLight.position.x = Math.sin(Date.now() * 0.001) * 2;
-  cone.position.copy(spotLight.position);
+  // ライトを左右に動かす
+  light.position.x = Math.sin(Date.now() * 0.001) * 30;
 
   renderer.render(scene, camera);
 }
