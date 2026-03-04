@@ -1,8 +1,4 @@
 import * as THREE from "three";
-import {
-  Lensflare,
-  LensflareElement,
-} from "three/examples/jsm/objects/Lensflare";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -13,50 +9,69 @@ const camera = new THREE.PerspectiveCamera(
 );
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
-// 背景を黒くしないとフレアが見えにくい
-scene.background = new THREE.Color(0x000000);
 document.body.appendChild(renderer.domElement);
 
-const light = new THREE.PointLight(0xffffff, 1.5, 2000);
-light.position.set(0, 0, -20);
-scene.add(light);
+const count = 2000;
+const geometry = new THREE.BufferGeometry();
+const positions = new Float32Array(count * 3);
+geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
 
-const textureLoader = new THREE.TextureLoader();
-const texture0 = textureLoader.load(
-  "https://threejs.org/examples/textures/lensflare/lensflare0.png",
-);
-const texture3 = textureLoader.load(
-  "https://threejs.org/examples/textures/lensflare/lensflare3.png",
-);
+const material = new THREE.PointsMaterial({ size: 0.05, color: 0x00ffff });
+const particles = new THREE.Points(geometry, material);
+scene.add(particles);
 
-const lensflare = new Lensflare();
+// ターゲット座標
+const boxPositions = [];
+const spherePositions = [];
 
-// メインの光
-lensflare.addElement(new LensflareElement(texture0, 700, 0));
+// 座標計算
+for (let i = 0; i < count; i++) {
+  // Box (ランダムに内部または表面)
+  boxPositions.push(
+    (Math.random() - 0.5) * 3,
+    (Math.random() - 0.5) * 3,
+    (Math.random() - 0.5) * 3,
+  );
 
-// ゴースト（小さい光の輪）
-lensflare.addElement(new LensflareElement(texture3, 60, 0.6));
-lensflare.addElement(new LensflareElement(texture3, 70, 0.7));
-lensflare.addElement(new LensflareElement(texture3, 120, 0.9));
-lensflare.addElement(new LensflareElement(texture3, 70, 1.0));
+  // Sphere (半径2の球面上)
+  const phi = Math.acos(-1 + (2 * i) / count);
+  const theta = Math.sqrt(count * Math.PI) * phi;
+  const r = 2;
+  spherePositions.push(
+    r * Math.cos(theta) * Math.sin(phi),
+    r * Math.sin(theta) * Math.sin(phi),
+    r * Math.cos(phi),
+  );
 
-light.add(lensflare);
+  // 初期位置はBox
+  positions[i * 3] = boxPositions[i * 3];
+  positions[i * 3 + 1] = boxPositions[i * 3 + 1];
+  positions[i * 3 + 2] = boxPositions[i * 3 + 2];
+}
 
-// 遮蔽物（これに隠れるとフレアも消える）
-const box = new THREE.Mesh(
-  new THREE.BoxGeometry(5, 5, 5),
-  new THREE.MeshNormalMaterial(),
-);
-box.position.z = -10;
-scene.add(box);
+let useSphere = false;
 
-camera.position.z = 5;
+// クリックで切り替え
+window.addEventListener("click", () => {
+  useSphere = !useSphere;
+});
+
+camera.position.z = 6;
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // ライトを左右に動かす
-  light.position.x = Math.sin(Date.now() * 0.001) * 30;
+  const target = useSphere ? spherePositions : boxPositions;
+  const current = geometry.attributes.position.array;
+
+  // 補間アニメーション
+  for (let i = 0; i < count * 3; i++) {
+    current[i] += (target[i] - current[i]) * 0.05;
+  }
+
+  geometry.attributes.position.needsUpdate = true;
+
+  particles.rotation.y += 0.002;
 
   renderer.render(scene, camera);
 }
