@@ -11,48 +11,68 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// 太陽
-const sun = new THREE.Mesh(
-  new THREE.SphereGeometry(1.5),
-  new THREE.MeshBasicMaterial({ color: 0xffff00 }),
+// 地面
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(100, 100),
+  new THREE.MeshBasicMaterial({ color: 0x228822 }),
 );
-scene.add(sun);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
 
-// 地球の公転用グループ（太陽の中心に配置）
-const earthOrbit = new THREE.Group();
-sun.add(earthOrbit);
+// グリッド（移動感のため）
+const grid = new THREE.GridHelper(100, 20);
+scene.add(grid);
 
-// 地球
-const earth = new THREE.Mesh(
-  new THREE.SphereGeometry(0.5),
-  new THREE.MeshBasicMaterial({ color: 0x0000ff }),
+// 環境オブジェクト（木やビルに見立てた箱）をランダム配置
+const boxGeo = new THREE.BoxGeometry(2, 5, 2);
+const boxMat = new THREE.MeshNormalMaterial();
+for (let i = 0; i < 50; i++) {
+  const box = new THREE.Mesh(boxGeo, boxMat);
+  box.position.set((Math.random() - 0.5) * 80, 2.5, (Math.random() - 0.5) * 80);
+  scene.add(box);
+}
+
+// 車
+const car = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 0.5, 2),
+  new THREE.MeshNormalMaterial(),
 );
-earth.position.x = 5; // 太陽からの距離
-earthOrbit.add(earth);
+scene.add(car);
 
-// 月の公転用グループ（地球の中心に配置）
-const moonOrbit = new THREE.Group();
-earth.add(moonOrbit);
+let speed = 0;
+let angle = 0;
+const keys = {};
 
-// 月
-const moon = new THREE.Mesh(
-  new THREE.SphereGeometry(0.15),
-  new THREE.MeshBasicMaterial({ color: 0x888888 }),
-);
-moon.position.x = 1.5; // 地球からの距離
-moonOrbit.add(moon);
+document.addEventListener("keydown", (e) => (keys[e.code] = true));
+document.addEventListener("keyup", (e) => (keys[e.code] = false));
 
-camera.position.z = 10;
-camera.position.y = 5;
-camera.lookAt(0, 0, 0);
+camera.position.set(0, 10, 10);
 
 function animate() {
   requestAnimationFrame(animate);
 
-  sun.rotation.y += 0.005; // 太陽自転
-  earthOrbit.rotation.y += 0.01; // 地球公転
-  earth.rotation.y += 0.02; // 地球自転
-  moonOrbit.rotation.y += 0.05; // 月公転
+  // 加速・減速
+  if (keys["ArrowUp"]) speed += 0.01;
+  if (keys["ArrowDown"]) speed -= 0.01;
+
+  // 旋回（動いている時だけ）
+  if (Math.abs(speed) > 0.001) {
+    if (keys["ArrowLeft"]) angle += 0.03;
+    if (keys["ArrowRight"]) angle -= 0.03;
+  }
+
+  // 摩擦
+  speed *= 0.96;
+
+  // 移動反映
+  car.rotation.y = angle;
+  car.position.x += Math.sin(angle) * speed;
+  car.position.z += Math.cos(angle) * speed;
+
+  // カメラ追従（簡易的）
+  camera.position.x = car.position.x;
+  camera.position.z = car.position.z + 10;
+  camera.lookAt(car.position);
 
   renderer.render(scene, camera);
 }
