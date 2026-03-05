@@ -11,68 +11,50 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// 地面
+const player = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshNormalMaterial(),
+);
+player.position.y = 0.5;
+scene.add(player);
+
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(100, 100),
-  new THREE.MeshBasicMaterial({ color: 0x228822 }),
+  new THREE.PlaneGeometry(20, 20),
+  new THREE.MeshBasicMaterial({ color: 0x555555 }),
 );
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
 
-// グリッド（移動感のため）
-const grid = new THREE.GridHelper(100, 20);
-scene.add(grid);
+let velocityY = 0;
+const gravity = 0.01;
+const jumpPower = 0.3;
+let onGround = true;
 
-// 環境オブジェクト（木やビルに見立てた箱）をランダム配置
-const boxGeo = new THREE.BoxGeometry(2, 5, 2);
-const boxMat = new THREE.MeshNormalMaterial();
-for (let i = 0; i < 50; i++) {
-  const box = new THREE.Mesh(boxGeo, boxMat);
-  box.position.set((Math.random() - 0.5) * 80, 2.5, (Math.random() - 0.5) * 80);
-  scene.add(box);
-}
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && onGround) {
+    velocityY = jumpPower;
+    onGround = false;
+  }
+});
 
-// 車
-const car = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 0.5, 2),
-  new THREE.MeshNormalMaterial(),
-);
-scene.add(car);
-
-let speed = 0;
-let angle = 0;
-const keys = {};
-
-document.addEventListener("keydown", (e) => (keys[e.code] = true));
-document.addEventListener("keyup", (e) => (keys[e.code] = false));
-
-camera.position.set(0, 10, 10);
+camera.position.set(0, 5, 10);
+camera.lookAt(0, 0, 0);
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // 加速・減速
-  if (keys["ArrowUp"]) speed += 0.01;
-  if (keys["ArrowDown"]) speed -= 0.01;
+  // 重力適用
+  velocityY -= gravity;
+  player.position.y += velocityY;
 
-  // 旋回（動いている時だけ）
-  if (Math.abs(speed) > 0.001) {
-    if (keys["ArrowLeft"]) angle += 0.03;
-    if (keys["ArrowRight"]) angle -= 0.03;
+  // 接地判定
+  if (player.position.y <= 0.5) {
+    player.position.y = 0.5;
+    velocityY = 0;
+    onGround = true;
+  } else {
+    onGround = false;
   }
-
-  // 摩擦
-  speed *= 0.96;
-
-  // 移動反映
-  car.rotation.y = angle;
-  car.position.x += Math.sin(angle) * speed;
-  car.position.z += Math.cos(angle) * speed;
-
-  // カメラ追従（簡易的）
-  camera.position.x = car.position.x;
-  camera.position.z = car.position.z + 10;
-  camera.lookAt(car.position);
 
   renderer.render(scene, camera);
 }
