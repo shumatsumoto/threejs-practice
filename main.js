@@ -1,78 +1,77 @@
 import * as THREE from "three";
+import { DragControls } from "three/examples/jsm/controls/DragControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0f0f0);
+
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
   1000,
 );
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const count = 2000;
-const geometry = new THREE.BufferGeometry();
-const positions = new Float32Array(count * 3);
-geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+// ライト
+scene.add(new THREE.AmbientLight(0xaaaaaa));
+const light = new THREE.SpotLight(0xffffff);
+light.position.set(0, 25, 50);
+light.angle = Math.PI / 5;
+light.penumbra = 0.2;
+light.decay = 2;
+light.distance = 200;
+light.castShadow = true;
+scene.add(light);
 
-const material = new THREE.PointsMaterial({ size: 0.05, color: 0x00ffff });
-const particles = new THREE.Points(geometry, material);
-scene.add(particles);
+// オブジェクト生成
+const objects = [];
+const geometry = new THREE.BoxGeometry(1, 1, 1);
 
-// ターゲット座標
-const boxPositions = [];
-const spherePositions = [];
+for (let i = 0; i < 5; i++) {
+  const material = new THREE.MeshLambertMaterial({
+    color: Math.random() * 0xffffff,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
 
-// 座標計算
-for (let i = 0; i < count; i++) {
-  // Box (ランダムに内部または表面)
-  boxPositions.push(
-    (Math.random() - 0.5) * 3,
-    (Math.random() - 0.5) * 3,
-    (Math.random() - 0.5) * 3,
-  );
+  mesh.position.x = (Math.random() - 0.5) * 10;
+  mesh.position.y = (Math.random() - 0.5) * 6;
+  mesh.position.z = (Math.random() - 0.5) * 4;
 
-  // Sphere (半径2の球面上)
-  const phi = Math.acos(-1 + (2 * i) / count);
-  const theta = Math.sqrt(count * Math.PI) * phi;
-  const r = 2;
-  spherePositions.push(
-    r * Math.cos(theta) * Math.sin(phi),
-    r * Math.sin(theta) * Math.sin(phi),
-    r * Math.cos(phi),
-  );
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
 
-  // 初期位置はBox
-  positions[i * 3] = boxPositions[i * 3];
-  positions[i * 3 + 1] = boxPositions[i * 3 + 1];
-  positions[i * 3 + 2] = boxPositions[i * 3 + 2];
+  scene.add(mesh);
+  objects.push(mesh);
 }
 
-let useSphere = false;
+// OrbitControls（カメラ操作用）
+const orbitControls = new OrbitControls(camera, renderer.domElement);
 
-// クリックで切り替え
-window.addEventListener("click", () => {
-  useSphere = !useSphere;
+// DragControls（オブジェクト操作用）
+const dragControls = new DragControls(objects, camera, renderer.domElement);
+
+// イベントリスナー
+dragControls.addEventListener("dragstart", function (event) {
+  // ドラッグ中はカメラ操作を無効化
+  orbitControls.enabled = false;
+  // 色を変えて掴んでいることを強調
+  event.object.material.emissive.set(0xaaaaaa);
 });
 
-camera.position.z = 6;
+dragControls.addEventListener("dragend", function (event) {
+  // ドラッグ終了でカメラ操作を有効化
+  orbitControls.enabled = true;
+  // 色を戻す
+  event.object.material.emissive.set(0x000000);
+});
+
+camera.position.z = 10;
 
 function animate() {
   requestAnimationFrame(animate);
-
-  const target = useSphere ? spherePositions : boxPositions;
-  const current = geometry.attributes.position.array;
-
-  // 補間アニメーション
-  for (let i = 0; i < count * 3; i++) {
-    current[i] += (target[i] - current[i]) * 0.05;
-  }
-
-  geometry.attributes.position.needsUpdate = true;
-
-  particles.rotation.y += 0.002;
-
   renderer.render(scene, camera);
 }
 animate();
