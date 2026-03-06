@@ -11,60 +11,92 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+const bullets = [];
+const enemies = [];
 
-const gridSize = 3;
-const cubes = []; // 1次元配列で管理して、インデックス計算で隣接を求める
+// プレイヤー（自機）
+const player = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshNormalMaterial(),
+);
+player.position.set(0, 0, 4);
+scene.add(player);
 
-// 初期化
-for (let i = 0; i < gridSize * gridSize; i++) {
-  const geometry = new THREE.BoxGeometry(0.8, 0.8, 0.1);
-  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // 赤
-  const mesh = new THREE.Mesh(geometry, material);
+// キー状態管理
+const keys = {};
+document.addEventListener("keydown", (e) => (keys[e.code] = true));
+document.addEventListener("keyup", (e) => (keys[e.code] = false));
 
-  const x = (i % gridSize) - 1;
-  const y = Math.floor(i / gridSize) - 1;
-
-  mesh.position.set(x, y, 0);
-  mesh.userData = { index: i, active: false }; // 状態を持たせる
-
-  scene.add(mesh);
-  cubes.push(mesh);
-}
-
-function toggle(index) {
-  if (index < 0 || index >= cubes.length) return;
-
-  const mesh = cubes[index];
-  mesh.userData.active = !mesh.userData.active;
-  mesh.material.color.set(mesh.userData.active ? 0x0000ff : 0xff0000);
-}
-
-window.addEventListener("click", (event) => {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(cubes);
-
-  if (intersects.length > 0) {
-    const index = intersects[0].object.userData.index;
-    const x = index % gridSize;
-    const y = Math.floor(index / gridSize);
-
-    toggle(index); // 自分
-    if (x > 0) toggle(index - 1); // 左
-    if (x < gridSize - 1) toggle(index + 1); // 右
-    if (y > 0) toggle(index - gridSize); // 下
-    if (y < gridSize - 1) toggle(index + gridSize); // 上
+// 弾発射
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space") {
+    const geometry = new THREE.SphereGeometry(0.1);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    const bullet = new THREE.Mesh(geometry, material);
+    // 自機の位置から発射
+    bullet.position.copy(player.position);
+    scene.add(bullet);
+    bullets.push(bullet);
   }
 });
 
-camera.position.z = 5;
+// 敵生成
+setInterval(() => {
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  const enemy = new THREE.Mesh(geometry, material);
+  enemy.position.set((Math.random() - 0.5) * 10, 0, -20);
+  scene.add(enemy);
+  enemies.push(enemy);
+}, 1000);
+
+camera.position.set(0, 5, 10);
+camera.lookAt(0, 0, 0);
 
 function animate() {
   requestAnimationFrame(animate);
+
+  // 自機の移動
+  if (keys["ArrowLeft"]) player.position.x -= 0.1;
+  if (keys["ArrowRight"]) player.position.x += 0.1;
+
+  // 弾の移動
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.position.z -= 0.5; // 奥へ
+
+    // 画面外削除
+    if (b.position.z < -30) {
+      scene.remove(b);
+      bullets.splice(i, 1);
+    }
+  }
+
+  // 敵の移動と衝突判定
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    e.position.z += 0.1; // 手前へ
+
+    // 衝突判定
+    for (let j = bullets.length - 1; j >= 0; j--) {
+      const b = bullets[j];
+      if (e.position.distanceTo(b.position) < 0.8) {
+        // ヒット
+        scene.remove(e);
+        scene.remove(b);
+        enemies.splice(i, 1);
+        bullets.splice(j, 1);
+        break; // この敵は消えたのでループ抜ける
+      }
+    }
+
+    // 画面外削除
+    if (e.position.z > 10) {
+      scene.remove(e);
+      enemies.splice(i, 1);
+    }
+  }
+
   renderer.render(scene, camera);
 }
 animate();
