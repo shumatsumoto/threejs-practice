@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import * as CANNON from "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -11,89 +12,76 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// UI
-const inventory = document.createElement("div");
-inventory.style.position = "absolute";
-inventory.style.bottom = "10px";
-inventory.style.left = "50%";
-inventory.style.transform = "translateX(-50%)";
-inventory.style.width = "80%";
-inventory.style.height = "80px";
-inventory.style.backgroundColor = "rgba(50, 50, 50, 0.8)";
-inventory.style.display = "flex";
-inventory.style.alignItems = "center";
-inventory.style.justifyContent = "center";
-inventory.style.border = "2px solid white";
-document.body.appendChild(inventory);
+// 1. 物理ワールド設定
+const world = new CANNON.World();
+world.gravity.set(0, -9.82, 0);
 
-// アイテム
-const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-const material = new THREE.MeshNormalMaterial();
-const items = [];
+// 2. 地面
+const floorGeo = new THREE.PlaneGeometry(10, 10);
+const floorMat = new THREE.MeshNormalMaterial();
+const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+scene.add(floorMesh);
 
-for (let i = 0; i < 3; i++) {
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.x = (i - 1) * 2;
-  mesh.userData = { id: i, name: `Box ${i + 1}` };
-  scene.add(mesh);
-  items.push(mesh);
-}
-
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-window.addEventListener("click", (event) => {
-  // UI上のクリックは無視（簡易実装）
-  if (event.target !== renderer.domElement) return;
-
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(items);
-
-  if (intersects.length > 0) {
-    const obj = intersects[0].object;
-    if (obj.visible) {
-      addToInventory(obj);
-    }
-  }
+const floorBody = new CANNON.Body({
+  mass: 0, // 質量0は静的オブジェクト
+  shape: new CANNON.Plane(),
 });
+floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+world.addBody(floorBody);
 
-function addToInventory(obj) {
-  obj.visible = false;
+// メッシュとボディのペアを管理する配列
+const objects = [];
 
-  const slot = document.createElement("div");
-  slot.innerText = obj.userData.name;
-  slot.style.width = "60px";
-  slot.style.height = "60px";
-  slot.style.backgroundColor = "#888";
-  slot.style.margin = "5px";
-  slot.style.display = "flex";
-  slot.style.alignItems = "center";
-  slot.style.justifyContent = "center";
-  slot.style.cursor = "pointer";
-  slot.style.color = "white";
+function createBox(x, y, z) {
+  const width = 1;
+  const height = 1;
+  const depth = 1;
 
-  slot.onclick = () => {
-    obj.visible = true;
-    obj.position.set(0, 0, 2); // 手前に出現
-    inventory.removeChild(slot);
-  };
+  // Three.js
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(width, height, depth),
+    new THREE.MeshNormalMaterial(),
+  );
+  scene.add(mesh);
 
-  inventory.appendChild(slot);
+  // Cannon.js
+  const shape = new CANNON.Box(
+    new CANNON.Vec3(width / 2, height / 2, depth / 2),
+  );
+  const body = new CANNON.Body({
+    mass: 1,
+    position: new CANNON.Vec3(x, y, z),
+    shape: shape,
+  });
+  world.addBody(body);
+
+  objects.push({ mesh, body });
 }
 
-camera.position.z = 5;
+// 箱を積み上げる
+createBox(0, 5, 0);
+createBox(0.5, 8, 0);
+createBox(-0.5, 12, 0);
+
+camera.position.set(0, 5, 10);
+camera.lookAt(0, 2, 0);
 
 function animate() {
   requestAnimationFrame(animate);
-  items.forEach((item) => {
-    if (item.visible) {
-      item.rotation.x += 0.01;
-      item.rotation.y += 0.01;
-    }
+
+  // 物理ステップを進める
+  world.step(1 / 60);
+
+  // 位置同期
+  objects.forEach((obj) => {
+    obj.mesh.position.copy(obj.body.position);
+    obj.mesh.quaternion.copy(obj.body.quaternion);
   });
+
+  // 地面メッシュも同期（回転しているので）
+  floorMesh.position.copy(floorBody.position);
+  floorMesh.quaternion.copy(floorBody.quaternion);
+
   renderer.render(scene, camera);
 }
 animate();
