@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import * as CANNON from "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js";
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -12,75 +11,67 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// 1. 物理ワールド設定
-const world = new CANNON.World();
-world.gravity.set(0, -9.82, 0);
+const player = new THREE.Mesh(
+  new THREE.BoxGeometry(1, 1, 1),
+  new THREE.MeshNormalMaterial(),
+);
+scene.add(player);
 
-// 2. 地面
-const floorGeo = new THREE.PlaneGeometry(10, 10);
-const floorMat = new THREE.MeshNormalMaterial();
-const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-scene.add(floorMesh);
+const wall = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 2, 2),
+  new THREE.MeshBasicMaterial({ color: 0xff0000 }),
+);
+wall.position.set(3, 0, 0);
+scene.add(wall);
 
-const floorBody = new CANNON.Body({
-  mass: 0, // 質量0は静的オブジェクト
-  shape: new CANNON.Plane(),
-});
-floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
-world.addBody(floorBody);
+// 境界ボックスのヘルパー（可視化用）
+const playerBoxHelper = new THREE.BoxHelper(player, 0xffff00);
+scene.add(playerBoxHelper);
+const wallBoxHelper = new THREE.BoxHelper(wall, 0xff00ff);
+scene.add(wallBoxHelper);
 
-// メッシュとボディのペアを管理する配列
-const objects = [];
+const keys = {};
+document.addEventListener("keydown", (e) => (keys[e.code] = true));
+document.addEventListener("keyup", (e) => (keys[e.code] = false));
 
-function createBox(x, y, z) {
-  const width = 1;
-  const height = 1;
-  const depth = 1;
-
-  // Three.js
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(width, height, depth),
-    new THREE.MeshNormalMaterial(),
-  );
-  scene.add(mesh);
-
-  // Cannon.js
-  const shape = new CANNON.Box(
-    new CANNON.Vec3(width / 2, height / 2, depth / 2),
-  );
-  const body = new CANNON.Body({
-    mass: 1,
-    position: new CANNON.Vec3(x, y, z),
-    shape: shape,
-  });
-  world.addBody(body);
-
-  objects.push({ mesh, body });
-}
-
-// 箱を積み上げる
-createBox(0, 5, 0);
-createBox(0.5, 8, 0);
-createBox(-0.5, 12, 0);
-
-camera.position.set(0, 5, 10);
-camera.lookAt(0, 2, 0);
+camera.position.set(0, 10, 0);
+camera.lookAt(0, 0, 0);
 
 function animate() {
   requestAnimationFrame(animate);
 
-  // 物理ステップを進める
-  world.step(1 / 60);
+  let dx = 0;
+  let dz = 0;
+  if (keys["ArrowUp"]) dz = -0.1;
+  if (keys["ArrowDown"]) dz = 0.1;
+  if (keys["ArrowLeft"]) dx = -0.1;
+  if (keys["ArrowRight"]) dx = 0.1;
 
-  // 位置同期
-  objects.forEach((obj) => {
-    obj.mesh.position.copy(obj.body.position);
-    obj.mesh.quaternion.copy(obj.body.quaternion);
-  });
+  if (dx !== 0 || dz !== 0) {
+    // 移動後の位置を計算（実際にはまだ動かさない）
+    const nextPosition = player.position
+      .clone()
+      .add(new THREE.Vector3(dx, 0, dz));
 
-  // 地面メッシュも同期（回転しているので）
-  floorMesh.position.copy(floorBody.position);
-  floorMesh.quaternion.copy(floorBody.quaternion);
+    // 移動後のボックスを作成
+    const tempBox = new THREE.Box3().setFromObject(player);
+    // Box3はワールド座標系なので、移動分を適用する
+    tempBox.translate(new THREE.Vector3(dx, 0, dz));
+
+    // 壁のボックス
+    const wallBox = new THREE.Box3().setFromObject(wall);
+
+    // 衝突判定
+    if (!tempBox.intersectsBox(wallBox)) {
+      // 衝突しないなら移動
+      player.position.copy(nextPosition);
+    } else {
+      // 衝突！
+      console.log("Hit!");
+    }
+  }
+
+  playerBoxHelper.update();
 
   renderer.render(scene, camera);
 }
