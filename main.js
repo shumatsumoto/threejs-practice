@@ -11,63 +11,89 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.GridHelper(20, 20));
+// UI
+const inventory = document.createElement("div");
+inventory.style.position = "absolute";
+inventory.style.bottom = "10px";
+inventory.style.left = "50%";
+inventory.style.transform = "translateX(-50%)";
+inventory.style.width = "80%";
+inventory.style.height = "80px";
+inventory.style.backgroundColor = "rgba(50, 50, 50, 0.8)";
+inventory.style.display = "flex";
+inventory.style.alignItems = "center";
+inventory.style.justifyContent = "center";
+inventory.style.border = "2px solid white";
+document.body.appendChild(inventory);
 
-const player = new THREE.Mesh(
-  new THREE.BoxGeometry(1, 1, 1),
-  new THREE.MeshNormalMaterial(),
-);
-scene.add(player);
+// アイテム
+const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+const material = new THREE.MeshNormalMaterial();
+const items = [];
 
-let theta = 0; // 水平角度
-let phi = 60 * (Math.PI / 180); // 垂直角度
-const radius = 10;
+for (let i = 0; i < 3; i++) {
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.x = (i - 1) * 2;
+  mesh.userData = { id: i, name: `Box ${i + 1}` };
+  scene.add(mesh);
+  items.push(mesh);
+}
 
-let isDragging = false;
-let prevMouse = { x: 0, y: 0 };
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
-document.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  prevMouse = { x: e.clientX, y: e.clientY };
-});
+window.addEventListener("click", (event) => {
+  // UI上のクリックは無視（簡易実装）
+  if (event.target !== renderer.domElement) return;
 
-document.addEventListener("mouseup", () => (isDragging = false));
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-document.addEventListener("mousemove", (e) => {
-  if (isDragging) {
-    const deltaX = e.clientX - prevMouse.x;
-    const deltaY = e.clientY - prevMouse.y;
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(items);
 
-    theta -= deltaX * 0.01;
-    phi -= deltaY * 0.01;
-
-    // 制限
-    phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi));
-
-    prevMouse = { x: e.clientX, y: e.clientY };
+  if (intersects.length > 0) {
+    const obj = intersects[0].object;
+    if (obj.visible) {
+      addToInventory(obj);
+    }
   }
 });
 
+function addToInventory(obj) {
+  obj.visible = false;
+
+  const slot = document.createElement("div");
+  slot.innerText = obj.userData.name;
+  slot.style.width = "60px";
+  slot.style.height = "60px";
+  slot.style.backgroundColor = "#888";
+  slot.style.margin = "5px";
+  slot.style.display = "flex";
+  slot.style.alignItems = "center";
+  slot.style.justifyContent = "center";
+  slot.style.cursor = "pointer";
+  slot.style.color = "white";
+
+  slot.onclick = () => {
+    obj.visible = true;
+    obj.position.set(0, 0, 2); // 手前に出現
+    inventory.removeChild(slot);
+  };
+
+  inventory.appendChild(slot);
+}
+
+camera.position.z = 5;
+
 function animate() {
   requestAnimationFrame(animate);
-
-  // プレイヤーが勝手に動くデモ
-  player.position.x = Math.sin(Date.now() * 0.001) * 5;
-
-  // カメラ位置計算（球座標）
-  // プレイヤー位置を基準にする
-  const ox = radius * Math.sin(phi) * Math.sin(theta);
-  const oy = radius * Math.cos(phi);
-  const oz = radius * Math.sin(phi) * Math.cos(theta);
-
-  camera.position.set(
-    player.position.x + ox,
-    player.position.y + oy,
-    player.position.z + oz,
-  );
-
-  camera.lookAt(player.position);
-
+  items.forEach((item) => {
+    if (item.visible) {
+      item.rotation.x += 0.01;
+      item.rotation.y += 0.01;
+    }
+  });
   renderer.render(scene, camera);
 }
 animate();
